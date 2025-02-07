@@ -13,11 +13,6 @@ LOG_FILE="laboratorio.log"
 read -r -p "Pon el nombre del laboratorio: " NOMBRE_ALUMNO
 REGION="us-east-1"
 
-# Variables DDNS
-# read -r -p "Ingrese el TOKEN de DDNS: " DUCKDNS_TOKEN
-# read -r -p "Ingrese el primer subdominio (proxy-1): " DUCKDNS_SUBDOMAIN
-# read -r -p "Ingrese el segundo subdominio (proxy-2): " DUCKDNS_SUBDOMAIN2
-
 # Variables AMI-ID (Ubuntu server 24.04) y CLAVE SSH
 KEY_NAME="ssh-mensagl-2025-${NOMBRE_ALUMNO}"
 AMI_ID="ami-04b4f1a9cf54c11d0" # Llamar variable claves         
@@ -41,8 +36,9 @@ read -r -p "Ingrese la contraseña de la BD: " DB_PASSWORD
 exec > "$LOG_FILE" 2>&1
 
 ##############################                       
-#             VPC             #
+#             VPC            #
 ##############################
+
 # Crear VPC
 VPC_ID=$(aws ec2 create-vpc --cidr-block "10.225.0.0/16" --query 'Vpc.VpcId' --output text)
 aws ec2 create-tags --resources "$VPC_ID" --tags Key=Name,Value="vpc-mensagl-2025-${NOMBRE_ALUMNO}"
@@ -134,7 +130,7 @@ aws ec2 authorize-security-group-egress --group-id "$SG_MENSAJERIA_ID" --protoco
 #             RDS             #
 ##############################
 
-# Crear subnet RDS (ya la tenías definida)
+# Crear subnet RD
 aws rds create-db-subnet-group \
     --db-subnet-group-name wp-rds-subnet-group \
     --db-subnet-group-description "RDS Subnet Group for WordPress" \
@@ -221,7 +217,6 @@ INSTANCE_ID=$(aws ec2 run-instances \
     --query "Instances[0].InstanceId" \
     --output text)
 echo "${INSTANCE_NAME} creada: ${INSTANCE_ID}"
-
 ##############
 #    MySQL   #
 ##############
@@ -232,7 +227,7 @@ SECURITY_GROUP_ID="${SG_MYSQL_ID}"
 PRIVATE_IP="10.225.3.10"
 
 # Cargar el script para la base de datos primaria
-USER_DATA_SCRIPT=$(sed "s/\$role/primary/" DATOS-DE-USUARIO/configuracion-bd-primaria-y-slave.sh)
+USER_DATA_SCRIPT=$(sed 's/role=".*"/role="primary"/' DATOS-DE-USUARIO/configuracion-bd-primaria-y-slave.sh)
 
 INSTANCE_ID=$(aws ec2 run-instances \
     --image-id "$AMI_ID" \
@@ -251,7 +246,7 @@ INSTANCE_NAME="sgbd_replica-zona1"
 PRIVATE_IP="10.225.3.11"
 
 # Cargar el script para la base de datos secundaria
-USER_DATA_SCRIPT=$(sed "s/\$role/secondary/" DATOS-DE-USUARIO/configuracion-bd-primaria-y-slave.sh)
+USER_DATA_SCRIPT=$(sed 's/role=".*"/role="secondary"/' DATOS-DE-USUARIO/configuracion-bd-primaria-y-slave.sh)
 
 INSTANCE_ID=$(aws ec2 run-instances \
     --image-id "$AMI_ID" \
@@ -269,8 +264,8 @@ echo "${INSTANCE_NAME} creada: ${INSTANCE_ID}"
 ##############
 #    XMPP    #
 ##############
-# # xmpp-cluster-1
-# INSTANCE_NAME="xmpp-cluster-1"
+# # mensajeria-1
+# INSTANCE_NAME="mensajeria-1"
 # SUBNET_ID="${SUBNET_PRIVATE1_ID}"
 # SECURITY_GROUP_ID="${SG_MENSAJERIA_ID}"
 # PRIVATE_IP="10.225.3.20"
@@ -328,8 +323,8 @@ echo "${INSTANCE_NAME} creada: ${INSTANCE_ID}"
 #     --output text)
 # echo "${INSTANCE_NAME} creada: ${INSTANCE_ID}"
 
-# # XMPP-2
-# INSTANCE_NAME="xmpp-cluster-2"
+# # mensajeria-2
+# INSTANCE_NAME="mensajeria-2"
 # PRIVATE_IP="10.225.3.30"
 
 # INSTANCE_ID=$(aws ec2 run-instances \
@@ -343,58 +338,97 @@ echo "${INSTANCE_NAME} creada: ${INSTANCE_ID}"
 #     --output text)
 # echo "${INSTANCE_NAME} creada: ${INSTANCE_ID}"
 
-# ##############
-# # WORDPRESS  #
-# ##############
-# # cms-cluster-1
-# INSTANCE_NAME="cms-cluster-1"
-# SUBNET_ID="${SUBNET_PRIVATE2_ID}"
-# SECURITY_GROUP_ID="${SG_CMS_ID}"
-# PRIVATE_IP="10.225.4.10"
+##############
+# WORDPRESS  #
+##############
+# soporte-1
+INSTANCE_NAME="soporte-1"
+SUBNET_ID="${SUBNET_PRIVATE2_ID}"
+SECURITY_GROUP_ID="${SG_CMS_ID}"
+PRIVATE_IP="10.225.4.10"
 
-# USER_DATA_SCRIPT=$(cat <<EOF
-# #!/bin/#!/bin/bash
-# set -e
-# sudo apt update
-# sudo apt install apache2 mysql-client mysql-server php php-mysql -y
-# curl -O https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar
-# chmod +x wp-cli.phar
-# sudo mv wp-cli.phar /usr/local/bin/wp
-# sudo rm -rf /var/www/html/*
-# sudo chmod -R 755 /var/www/html
-# sudo chown -R ubuntu:ubuntu /var/www/html
-# # MySQL credentials
-# MYSQL_CMD="mysql -h ${RDS_ENDPOINT} -u ${DB_USERNAME} -p${DB_PASSWORD}"
-# $MYSQL_CMD <<EOF2
-# CREATE DATABASE IF NOT EXISTS ${DB_NAME};
-# CREATE USER IF NOT EXISTS '${DB_USERNAME}'@'%' IDENTIFIED BY '${DB_PASSWORD}';
-# GRANT ALL PRIVILEGES ON ${DB_NAME}.* TO '${DB_USERNAME}'@'%';
-# FLUSH PRIVILEGES;
-# EOF2
-# sudo -u ubuntu -k -- wp core download --path=/var/www/html
-# sudo -u ubuntu -k -- wp core config --dbname=${DB_NAME} --dbuser=${DB_USERNAME} --dbpass=${DB_PASSWORD} --dbhost=${RDS_ENDPOINT} --dbprefix=wp_ --path=/var/www/html
-# sudo -u ubuntu -k -- wp core install --url=10.225.4.100  --title=Site_Title --admin_user=${DB_USERNAME} --admin_password=${DB_PASSWORD} --admin_email=majam02@educantabria.es --path=/var/www/html
-# #sudo -u ubuntu -k -- wp option update home 'http://10.225.4.10' --path=/var/www/html
-# #sudo -u ubuntu -k -- wp option update siteurl 'http://10.225.4.10' --path=/var/www/html
-# sudo -u ubuntu -k -- wp plugin install supportcandy --activate --path=/var/www/html
-# echo "WP configurado / montado"
-# EOF
-# )
+USER_DATA_SCRIPT=$(cat <<EOF
+#!/bin/bash
+set -e
 
-# INSTANCE_ID=$(aws ec2 run-instances \
-#     --image-id "$AMI_ID" \
-#     --instance-type "$INSTANCE_TYPE" \
-#     --key-name "$KEY_NAME" \
-#     --block-device-mappings "DeviceName=/dev/sda1,Ebs={VolumeSize=$VOLUME_SIZE,VolumeType=gp3,DeleteOnTermination=true}" \
-#     --network-interfaces "SubnetId=$SUBNET_ID,DeviceIndex=0,PrivateIpAddresses=[{Primary=true,PrivateIpAddress=$PRIVATE_IP}],Groups=[$SECURITY_GROUP_ID]" \
-#     --tag-specifications "ResourceType=instance,Tags=[{Key=Name,Value=$INSTANCE_NAME}]" \
-#     --user-data "$USER_DATA_SCRIPT" \
-#     --query "Instances[0].InstanceId" \
-#     --output text)
-# echo "${INSTANCE_NAME} creada: ${INSTANCE_ID}"
+# Actualizar e instalar dependencias necesarias
+sudo apt update
+sudo apt install -y apache2 mysql-client php php-mysql libapache2-mod-php php-curl php-xml php-mbstring php-zip curl git unzip
 
-# # cms-cluster-2
-# INSTANCE_NAME="cms-cluster-1"
+# Instalar WP-CLI
+curl -O https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar
+chmod +x wp-cli.phar
+sudo mv wp-cli.phar /usr/local/bin/wp
+
+# Limpiar el directorio de Apache
+sudo rm -rf /var/www/html/*
+sudo chmod -R 755 /var/www/html
+sudo chown -R ubuntu:ubuntu /var/www/html
+
+# Configurar la base de datos en RDS
+mysql -h ${RDS_ENDPOINT} -u ${DB_USERNAME} -p${DB_PASSWORD} <<SQL
+CREATE DATABASE IF NOT EXISTS ${DB_NAME};
+CREATE USER IF NOT EXISTS '${DB_USERNAME}'@'%' IDENTIFIED BY '${DB_PASSWORD}';
+GRANT ALL PRIVILEGES ON ${DB_NAME}.* TO '${DB_USERNAME}'@'%';
+FLUSH PRIVILEGES;
+SQL
+
+# Descargar WordPress como usuario ubuntu
+sudo -u ubuntu wp core download --path=/var/www/html
+
+# Eliminar el archivo wp-config.php existente si hay uno
+sudo -u ubuntu rm -f /var/www/html/wp-config.php
+
+# Exportar variables de entorno
+export DB_NAME=${DB_NAME}
+export DB_USERNAME=${DB_USERNAME}
+export DB_PASSWORD=${DB_PASSWORD}
+export RDS_ENDPOINT=${RDS_ENDPOINT}
+
+# Configurar wp-config.php
+sudo -u ubuntu wp core config --dbname=${DB_NAME} --dbuser=${DB_USERNAME} --dbpass=${DB_PASSWORD} --dbhost=${RDS_ENDPOINT} --dbprefix=wp_ --path=/var/www/html
+
+# Instalar WordPress
+sudo -u ubuntu wp core install --url=http://${PRIVATE_IP} --title="Mi WordPress" --admin_user=${DB_USERNAME} --admin_password=${DB_PASSWORD} --admin_email="srestrepoj01@educantabria.es" --path=/var/www/html
+
+# Instalar plugins adicionales
+sudo -u ubuntu wp plugin install supportcandy --activate --path=/var/www/html
+sudo -u ubuntu wp plugin install user-registration --activate --path=/var/www/html
+
+# Configurar Apache para WordPress
+sudo bash -c "cat > /etc/apache2/sites-available/wordpress.conf <<APACHE
+<VirtualHost *:80>
+    ServerName ${PRIVATE_IP}
+    DocumentRoot /var/www/html
+    <Directory /var/www/html>
+        AllowOverride All
+        Require all granted
+    </Directory>
+</VirtualHost>
+APACHE"
+
+# Habilitar el sitio de WordPress y reiniciar Apache
+sudo a2dissite 000-default.conf
+sudo a2ensite wordpress.conf
+sudo a2enmod rewrite
+sudo systemctl restart apache2
+EOF
+)
+
+INSTANCE_ID=$(aws ec2 run-instances \
+    --image-id "$AMI_ID" \
+    --instance-type "$INSTANCE_TYPE" \
+    --key-name "$KEY_NAME" \
+    --block-device-mappings "DeviceName=/dev/sda1,Ebs={VolumeSize=$VOLUME_SIZE,VolumeType=gp3,DeleteOnTermination=true}" \
+    --network-interfaces "SubnetId=$SUBNET_ID,DeviceIndex=0,PrivateIpAddresses=[{Primary=true,PrivateIpAddress=$PRIVATE_IP}],Groups=[$SECURITY_GROUP_ID]" \
+    --tag-specifications "ResourceType=instance,Tags=[{Key=Name,Value=$INSTANCE_NAME}]" \
+    --user-data "$USER_DATA_SCRIPT" \
+    --query "Instances[0].InstanceId" \
+    --output text)
+echo "${INSTANCE_NAME} creada: ${INSTANCE_ID}"
+
+# # soporte-2
+# INSTANCE_NAME="soporte-2"
 # SUBNET_ID="${SUBNET_PRIVATE2_ID}"
 # SECURITY_GROUP_ID="${SG_CMS_ID}"
 # PRIVATE_IP="10.225.4.11"
