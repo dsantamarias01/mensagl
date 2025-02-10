@@ -6,4 +6,4 @@ USO DE:
 - USER DATA (carpeta DATOS DE USUARIO, dentro de cada uno de los servicios)
 
 Esquema de red planteado:
-![Esquema de red]([https://github.com/dsantamarias01/mensagl/blob/main/mensagl-main/ESQUEMA-RED/Captura%20de%20pantalla%202025-02-07%20114320.png](https://github.com/dsantamarias01/mensagl/blob/main/mensagl-main/ESQUEMA-RED/Diagrama_david.drawio))
+![Esquema de red](https://github.com/dsantamarias01/mensagl/blob/main/mensagl-main/ESQUEMA-RED/Captura%20de%20pantalla%202025-02-10%20132613.png)
