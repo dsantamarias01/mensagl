@@ -46,16 +46,16 @@ exec > "$LOG_FILE" 2>&1
 ##############################
 
 # Crear VPC
-VPC_ID=$(aws ec2 create-vpc --cidr-block "10.225.0.0/16" --query 'Vpc.VpcId' --output text)
+VPC_ID=$(aws ec2 create-vpc --cidr-block "10.228.0.0/16" --query 'Vpc.VpcId' --output text)
 aws ec2 create-tags --resources "$VPC_ID" --tags Key=Name,Value="vpc-mensagl-2025-${NOMBRE_ALUMNO}"
 
 # Crear Subnets publicas
-SUBNET_PUBLIC1_ID=$(aws ec2 create-subnet --vpc-id "$VPC_ID" --cidr-block "10.225.1.0/24" --availability-zone "${REGION}a" --query 'Subnet.SubnetId' --output text)
-SUBNET_PUBLIC2_ID=$(aws ec2 create-subnet --vpc-id "$VPC_ID" --cidr-block "10.225.2.0/24" --availability-zone "${REGION}b" --query 'Subnet.SubnetId' --output text)
+SUBNET_PUBLIC1_ID=$(aws ec2 create-subnet --vpc-id "$VPC_ID" --cidr-block "10.228.1.0/24" --availability-zone "${REGION}a" --query 'Subnet.SubnetId' --output text)
+SUBNET_PUBLIC2_ID=$(aws ec2 create-subnet --vpc-id "$VPC_ID" --cidr-block "10.228.2.0/24" --availability-zone "${REGION}b" --query 'Subnet.SubnetId' --output text)
 
 # Crear Subnets privadas
-SUBNET_PRIVATE1_ID=$(aws ec2 create-subnet --vpc-id "$VPC_ID" --cidr-block "10.225.3.0/24" --availability-zone "${REGION}a" --query 'Subnet.SubnetId' --output text)
-SUBNET_PRIVATE2_ID=$(aws ec2 create-subnet --vpc-id "$VPC_ID" --cidr-block "10.225.4.0/24" --availability-zone "${REGION}b" --query 'Subnet.SubnetId' --output text)
+SUBNET_PRIVATE1_ID=$(aws ec2 create-subnet --vpc-id "$VPC_ID" --cidr-block "10.228.3.0/24" --availability-zone "${REGION}a" --query 'Subnet.SubnetId' --output text)
+SUBNET_PRIVATE2_ID=$(aws ec2 create-subnet --vpc-id "$VPC_ID" --cidr-block "10.228.4.0/24" --availability-zone "${REGION}b" --query 'Subnet.SubnetId' --output text)
 
 # Crear Internet Gateway
 IGW_ID=$(aws ec2 create-internet-gateway --query 'InternetGateway.InternetGatewayId' --output text)
@@ -202,14 +202,14 @@ echo "RDS Endpoint: $RDS_ENDPOINT"
 INSTANCE_NAME="proxy-prosody"
 SUBNET_ID="${SUBNET_PUBLIC1_ID}"
 SECURITY_GROUP_ID="${SG_PROXY_PROSODY_ID}"
-PRIVATE_IP="10.225.1.10"
+PRIVATE_IP="10.228.1.10"
 INSTANCE_TYPE="t2.micro"
 VOLUME_SIZE=8
 
 USER_DATA_SCRIPT=$(cat <<EOF
 #!/bin/bash
 # CAMBIAR LINK DE DESCARGA
-sudo curl -o /home/ubuntu/setup.sh https://raw.githubusercontent.com/srestrepoj01/mensagl/refs/heads/main/AWS-CLI/AWS-DATA-USER/haproxy_prosody.sh
+sudo curl -o /home/ubuntu/setup.sh https://raw.githubusercontent.com/dsantamarias01/mensagl/refs/heads/main/mensagl-main/AWS-CLI/AWS-DATA-USER/haproxy_prosody.sh
 sudo chown ubuntu:ubuntu setup.sh
 sudo chmod +x /home/ubuntu/setup.sh
 sudo bash /home/ubuntu/setup.sh
@@ -221,8 +221,8 @@ sudo chmod 400 /home/ubuntu/.ssh/${KEY_NAME}.pem
 sudo chown ubuntu:ubuntu /home/ubuntu/.ssh/${KEY_NAME}.pem
 
 # Copiar A prosody, para configurarlo en ambas instancias del cluster
-sudo scp -i "/home/ubuntu/.ssh/${KEY_NAME}.pem" -r /etc/letsencrypt/live/srestrepoj-prosody.duckdns.org ubuntu@10.225.3.20:/home/ubuntu
-sudo scp -i "/home/ubuntu/.ssh/${KEY_NAME}.pem" -r /etc/letsencrypt/live/srestrepoj-prosody.duckdns.org ubuntu@10.225.3.30:/home/ubuntu
+sudo scp -i "/home/ubuntu/.ssh/${KEY_NAME}.pem" -r /etc/letsencrypt/live/david-prosody.duckdns.org ubuntu@10.228.3.20:/home/ubuntu
+sudo scp -i "/home/ubuntu/.ssh/${KEY_NAME}.pem" -r /etc/letsencrypt/live/david-prosody.duckdns.org ubuntu@10.228.3.30:/home/ubuntu
 
 EOF
 )
@@ -240,7 +240,7 @@ echo "${INSTANCE_NAME} creada: ${INSTANCE_ID}"
 # proxy-wordpress
 INSTANCE_NAME="proxy-wordpress"
 SUBNET_ID="${SUBNET_PUBLIC2_ID}"
-PRIVATE_IP="10.225.2.10"
+PRIVATE_IP="10.228.2.10"
 INSTANCE_TYPE="t2.micro"
 SECURITY_GROUP_ID="${SG_PROXY_WP_ID}"
 VOLUME_SIZE=8
@@ -248,7 +248,7 @@ VOLUME_SIZE=8
 USER_DATA_SCRIPT=$(cat <<EOF
 #!/bin/bash
 # CAMBIAR LINK DE DESCARGA
-sudo curl -o /home/ubuntu/setup.sh https://raw.githubusercontent.com/srestrepoj01/mensagl/refs/heads/main/AWS-CLI/AWS-DATA-USER/haproxy_wordpress.sh
+sudo curl -o /home/ubuntu/setup.sh https://raw.githubusercontent.com/dsantamarias01/mensagl/refs/heads/main/mensagl-main/AWS-CLI/AWS-DATA-USER/haproxy_wordpress.sh
 sudo chown ubuntu:ubuntu setup.sh
 sudo chmod +x /home/ubuntu/setup.sh
 sudo bash /home/ubuntu/setup.sh
@@ -260,8 +260,8 @@ sudo chmod 400 /home/ubuntu/.ssh/${KEY_NAME}.pem
 sudo chown ubuntu:ubuntu /home/ubuntu/.ssh/${KEY_NAME}.pem
 
 # Copiar A wordpress, para configurarlo, en ambas instancias del cluster
-sudo scp -i "/home/ubuntu/.ssh/${KEY_NAME}.pem" -r /etc/letsencrypt/live/srestrepoj-wordpress.duckdns.org ubuntu@10.225.4.10:/home/ubuntu
-sudo scp -i "/home/ubuntu/.ssh/${KEY_NAME}.pem" -r /etc/letsencrypt/live/srestrepoj-wordpress.duckdns.org ubuntu@10.225.4.11:/home/ubuntu
+sudo scp -i "/home/ubuntu/.ssh/${KEY_NAME}.pem" -r /etc/letsencrypt/live/david-wordpress.duckdns.org ubuntu@10.228.4.10:/home/ubuntu
+sudo scp -i "/home/ubuntu/.ssh/${KEY_NAME}.pem" -r /etc/letsencrypt/live/david-wordpress.duckdns.org ubuntu@10.228.4.11:/home/ubuntu
 EOF
 )
 
@@ -285,7 +285,7 @@ echo "${INSTANCE_NAME} creada: ${INSTANCE_ID}"
 INSTANCE_NAME="sgbd_principal-zona1"
 SUBNET_ID="${SUBNET_PRIVATE1_ID}"
 SECURITY_GROUP_ID="${SG_MYSQL_ID}"
-PRIVATE_IP="10.225.3.10"
+PRIVATE_IP="10.228.3.10"
 
 # Cargar el script para la base de datos primaria
 USER_DATA_SCRIPT=$(sed 's/role=".*"/role="primary"/' AWS-DATA-USER/configuracion-bd-primaria-y-slave.sh)
@@ -304,7 +304,7 @@ echo "${INSTANCE_NAME} creada: ${INSTANCE_ID}"
 
 # sgbd_secundario
 INSTANCE_NAME="sgbd_replica-zona1"
-PRIVATE_IP="10.225.3.11"
+PRIVATE_IP="10.228.3.11"
 
 # Cargar el script para la base de datos secundaria
 USER_DATA_SCRIPT=$(sed 's/role=".*"/role="secondary"/' AWS-DATA-USER/configuracion-bd-primaria-y-slave.sh)
@@ -329,13 +329,13 @@ echo "${INSTANCE_NAME} creada: ${INSTANCE_ID}"
 INSTANCE_NAME="mensajeria-1"
 SUBNET_ID="${SUBNET_PRIVATE1_ID}"
 SECURITY_GROUP_ID="${SG_MENSAJERIA_ID}"
-PRIVATE_IP="10.225.3.20"
+PRIVATE_IP="10.228.3.20"
 USER_DATA_SCRIPT=$(cat <<EOF
 #!/bin/bash
 # Instalación de Prosody y configuración de base de datos MySQL externa.
 
 # Variables
-db_host="10.225.3.10"
+db_host="10.228.3.10"
 db_user="admin"
 db_password="Admin123"
 db_name="prosody"
@@ -355,8 +355,8 @@ check_instance_status() {
 }
 
 # Verificar el estado de las instancias de la base de datos
-check_instance_status "10.225.3.10"
-check_instance_status "10.225.3.11"
+check_instance_status "10.228.3.10"
+check_instance_status "10.228.3.11"
 
 # Instalación de Prosody
 echo "Instalando Prosody y módulos adicionales..." | tee -a $LOG_FILE
@@ -368,8 +368,8 @@ echo "Configurando Prosody..." | tee -a $LOG_FILE
 sudo tee /etc/prosody/prosody.cfg.lua > /dev/null <<EOL
 -- Prosody Configuration
 
-VirtualHost "srestrepoj-prosody.duckdns.org"
-admins = { "admin@srestrepoj-prosody.duckdns.org" }
+VirtualHost "david-prosody.duckdns.org"
+admins = { "admin@david-prosody.duckdns.org" }
 
 modules_enabled = {
     "roster";
@@ -415,10 +415,10 @@ echo "Reiniciando Prosody..." | tee -a $LOG_FILE
 sudo systemctl restart prosody
 
 # Crear usuario administrador
-echo "Creando usuario admin@srestrepoj-prosody.duckdns.org..." | tee -a $LOG_FILE
-sudo prosodyctl register admin srestrepoj-prosody.duckdns.org "Admin123"
+echo "Creando usuario admin@david-prosody.duckdns.org..." | tee -a $LOG_FILE
+sudo prosodyctl register admin david-prosody.duckdns.org "Admin123"
 
-echo "Prosody instalado y configurado con éxito en srestrepoj-prosody.duckdns.org" | tee -a $LOG_FILE
+echo "Prosody instalado y configurado con éxito en david-prosody.duckdns.org" | tee -a $LOG_FILE
 EOF
 )
  INSTANCE_ID=$(aws ec2 run-instances \
@@ -437,13 +437,13 @@ EOF
 INSTANCE_NAME="mensajeria-2"
 SUBNET_ID="${SUBNET_PRIVATE1_ID}"
 SECURITY_GROUP_ID="${SG_MENSAJERIA_ID}"
-PRIVATE_IP="10.225.3.30"
+PRIVATE_IP="10.228.3.30"
 USER_DATA_SCRIPT=$(cat <<EOF
 #!/bin/bash
 # Instalación de Prosody y configuración de base de datos MySQL externa.
 
 # Variables
-db_host="10.225.3.10"
+db_host="10.228.3.10"
 db_user="admin"
 db_password="Admin123"
 db_name="prosody"
@@ -463,8 +463,8 @@ check_instance_status() {
 }
 
 # Verificar el estado de las instancias de la base de datos
-check_instance_status "10.225.3.10"
-check_instance_status "10.225.3.11"
+check_instance_status "10.228.3.10"
+check_instance_status "10.228.3.11"
 
 # Instalación de Prosody
 echo "Instalando Prosody y módulos adicionales..." | tee -a $LOG_FILE
@@ -476,8 +476,8 @@ echo "Configurando Prosody..." | tee -a $LOG_FILE
 sudo tee /etc/prosody/prosody.cfg.lua > /dev/null <<EOL
 -- Prosody Configuration
 
-VirtualHost "srestrepoj-prosody.duckdns.org"
-admins = { "admin@srestrepoj-prosody.duckdns.org" }
+VirtualHost "david-prosody.duckdns.org"
+admins = { "admin@david-prosody.duckdns.org" }
 
 modules_enabled = {
     "roster";
@@ -523,10 +523,10 @@ echo "Reiniciando Prosody..." | tee -a $LOG_FILE
 sudo systemctl restart prosody
 
 # Crear usuario administrador
-echo "Creando usuario admin@srestrepoj-prosody.duckdns.org..." | tee -a $LOG_FILE
-sudo prosodyctl register admin srestrepoj-prosody.duckdns.org "Admin123"
+echo "Creando usuario admin@david-prosody.duckdns.org..." | tee -a $LOG_FILE
+sudo prosodyctl register admin david-prosody.duckdns.org "Admin123"
 
-echo "Prosody instalado y configurado con éxito en srestrepoj-prosody.duckdns.org" | tee -a $LOG_FILE
+echo "Prosody instalado y configurado con éxito en david-prosody.duckdns.org" | tee -a $LOG_FILE
 EOF
 )
  INSTANCE_ID=$(aws ec2 run-instances \
@@ -548,7 +548,7 @@ EOF
 INSTANCE_NAME="soporte-1"
 SUBNET_ID="${SUBNET_PRIVATE2_ID}"
 SECURITY_GROUP_ID="${SG_CMS_ID}"
-PRIVATE_IP="10.225.4.10"
+PRIVATE_IP="10.228.4.10"
 
 USER_DATA_SCRIPT=$(cat <<EOF
 #!/bin/bash
@@ -558,10 +558,10 @@ USER_DATA_SCRIPT=$(cat <<EOF
 
 # Variables
 WP_PATH="/var/www/html"
-WP_URL="https://srestrepoj-wordpress.duckdns.org"
+WP_URL="https://david-wordpress.duckdns.org"
 ROLE_NAME="cliente_soporte"
-SSL_CERT="/etc/apache2/ssl/srestrepoj-wordpress.duckdns.org/fullchain.pem"
-SSL_KEY="/etc/apache2/ssl/srestrepoj-wordpress.duckdns.org/privkey.pem"
+SSL_CERT="/etc/apache2/ssl/david-wordpress.duckdns.org/fullchain.pem"
+SSL_KEY="/etc/apache2/ssl/david-wordpress.duckdns.org/privkey.pem"
 LOG_FILE="/var/log/wp_install.log"
 # Funcion para registrar mensajes
 log() {
@@ -620,7 +620,7 @@ wp core config --dbname="$DB_NAME" --dbuser="$DB_USERNAME" --dbpass="$DB_PASSWOR
 
 # Instalar WordPress
 log "Instalando WordPress..."
-wp core install --url="$WP_URL" --title="CMS - TICKETING" --admin_user="$DB_USERNAME" --admin_password="$DB_PASSWORD" --admin_email="srestrepoj01@educantabria.es" --path=/var/www/html
+wp core install --url="$WP_URL" --title="CMS - TICKETING" --admin_user="$DB_USERNAME" --admin_password="$DB_PASSWORD" --admin_email="dsantamarias01@educantabria.es" --path=/var/www/html
 
 # Instalar plugins adicionales
 log "Instalando plugins..."
@@ -649,8 +649,8 @@ wp role cap "$ROLE_NAME" "view_own_ticket" --path=/var/www/html
 log "Configurando Apache para WordPress con SSL..."
 sudo bash -c "cat > /etc/apache2/sites-available/wordpress.conf <<APACHE
 <VirtualHost *:443>
-    ServerAdmin admin@srestrepoj-wordpress.duckdns.org
-    ServerName  srestrepoj-wordpress.duckdns.org
+    ServerAdmin admin@david-wordpress.duckdns.org
+    ServerName  david-wordpress.duckdns.org
 
     DocumentRoot /var/www/html
 
@@ -691,7 +691,7 @@ echo "${INSTANCE_NAME} creada: ${INSTANCE_ID}"
 INSTANCE_NAME="soporte-2"
 SUBNET_ID="${SUBNET_PRIVATE2_ID}"
 SECURITY_GROUP_ID="${SG_CMS_ID}"
-PRIVATE_IP="10.225.4.11"
+PRIVATE_IP="10.228.4.11"
 
 USER_DATA_SCRIPT=$(cat <<EOF
 #!/bin/bash
@@ -701,10 +701,10 @@ USER_DATA_SCRIPT=$(cat <<EOF
 
 # Variables
 WP_PATH="/var/www/html"
-WP_URL="https://srestrepoj-wordpress.duckdns.org"
+WP_URL="https://david-wordpress.duckdns.org"
 ROLE_NAME="cliente_soporte"
-SSL_CERT="/etc/apache2/ssl/srestrepoj-wordpress.duckdns.org/fullchain.pem"
-SSL_KEY="/etc/apache2/ssl/srestrepoj-wordpress.duckdns.org/privkey.pem"
+SSL_CERT="/etc/apache2/ssl/david-wordpress.duckdns.org/fullchain.pem"
+SSL_KEY="/etc/apache2/ssl/david-wordpress.duckdns.org/privkey.pem"
 LOG_FILE="/var/log/wp_install.log"
 # Funcion para registrar mensajes
 log() {
@@ -763,7 +763,7 @@ wp core config --dbname="$DB_NAME" --dbuser="$DB_USERNAME" --dbpass="$DB_PASSWOR
 
 # Instalar WordPress
 log "Instalando WordPress..."
-wp core install --url="$WP_URL" --title="CMS - TICKETING" --admin_user="$DB_USERNAME" --admin_password="$DB_PASSWORD" --admin_email="srestrepoj01@educantabria.es" --path=/var/www/html
+wp core install --url="$WP_URL" --title="CMS - TICKETING" --admin_user="$DB_USERNAME" --admin_password="$DB_PASSWORD" --admin_email="dsantamarias01@educantabria.es" --path=/var/www/html
 
 # Instalar plugins adicionales
 log "Instalando plugins..."
@@ -786,8 +786,8 @@ wp role cap "$ROLE_NAME" "view_own_ticket" --path=/var/www/html
 log "Configurando Apache para WordPress con SSL..."
 sudo bash -c "cat > /etc/apache2/sites-available/wordpress.conf <<APACHE
 <VirtualHost *:443>
-    ServerAdmin admin@srestrepoj-wordpress.duckdns.org
-    ServerName  srestrepoj-wordpress.duckdns.org
+    ServerAdmin admin@david-wordpress.duckdns.org
+    ServerName  david-wordpress.duckdns.org
 
     DocumentRoot /var/www/html
 

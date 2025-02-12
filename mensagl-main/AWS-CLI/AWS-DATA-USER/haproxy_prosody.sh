@@ -7,7 +7,7 @@ BACKUP_CFG_PATH="/etc/haproxy/haproxy.cfg.bak"
 # CONFIGURACION DUCKDNS
 
 # SEBASTIAN
-DUCKDNS_DOMAIN="srestrepoj-prosody.duckdns.org" # CAMBIAR POR DOMINIO DE PROSODY
+DUCKDNS_DOMAIN="david-prosody.duckdns.org" # CAMBIAR POR DOMINIO DE PROSODY
 DUCKDNS_TOKEN="d9c2144c-529b-4781-80b7-20ff1a7595de" # PONER TOKEN DE CUENTA
 
 SSL_PATH="/etc/letsencrypt/live/$DUCKDNS_DOMAIN"
@@ -106,20 +106,20 @@ frontend http_xmpp
 backend xmpp_back
     mode tcp
     balance roundrobin
-    server mensajeria1 10.225.3.20:5222 check
-    server mensajeria2 10.225.3.20:5269 check
-    server mensajeria3 10.225.3.20:5270 check
+    server mensajeria1 10.228.3.20:5222 check
+    server mensajeria2 10.228.3.20:5269 check
+    server mensajeria3 10.228.3.20:5270 check
 
 backend http_back
     mode http
     balance source
-    server mensajeria4 10.225.3.20:80 check
+    server mensajeria4 10.228.3.20:80 check
 
 backend db_back
     mode tcp
     balance roundrobin
-    server db_primary 10.225.3.10:3306 check
-    server db_secondary 10.225.3.11:3306 check backup
+    server db_primary 10.228.3.10:3306 check
+    server db_secondary 10.228.3.11:3306 check backup
 EOL
 
 # REINICIAR Y HABILITAR HAPROXY

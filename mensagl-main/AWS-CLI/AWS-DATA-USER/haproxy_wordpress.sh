@@ -2,7 +2,7 @@
 # Variables
 HAPROXY_CFG_PATH="/etc/haproxy/haproxy.cfg"
 BACKUP_CFG_PATH="/etc/haproxy/haproxy.cfg.bak"
-DUCKDNS_DOMAIN="srestrepoj-wordpress.duckdns.org"  # CAMBIAR POR DOMINIO DE WORDPRESS
+DUCKDNS_DOMAIN="david-wordpress.duckdns.org"  # CAMBIAR POR DOMINIO DE WORDPRESS
 DUCKDNS_TOKEN="d9c2144c-529b-4781-80b7-20ff1a7595de" # PONER TOKEN DE CUENTA
 SSL_PATH="/etc/letsencrypt/live/$DUCKDNS_DOMAIN"
 CERT_PATH="$SSL_PATH/fullchain.pem"
@@ -38,7 +38,7 @@ sudo apt update && sudo DEBIAN_FRONTEND=noninteractive apt install -y certbot
 if [ -f "$CERT_PATH" ]; then
     sudo certbot renew --non-interactive --quiet
 else
-    sudo certbot certonly --standalone -d $DUCKDNS_DOMAIN --non-interactive --agree-tos --email srestrepoj01@educantabria.es
+    sudo certbot certonly --standalone -d $DUCKDNS_DOMAIN --non-interactive --agree-tos --email dsantamarias01@educantabria.es
 fi
 
 # FUSIONAR ARCHIVOS DE CERTIFICADO
@@ -94,8 +94,8 @@ frontend wordpress_front
 backend wordpress_back
     mode http
     balance source
-    server wordpress1 10.225.4.10:80 check
-    server wordpress2 10.225.4.11:80 check
+    server wordpress1 10.228.4.10:80 check
+    server wordpress2 10.228.4.11:80 check
 EOL
 
 # REINICIAR Y HABILITAR HAPROXY
