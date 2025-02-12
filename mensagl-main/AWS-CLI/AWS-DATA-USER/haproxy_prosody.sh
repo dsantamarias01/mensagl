@@ -6,11 +6,8 @@ BACKUP_CFG_PATH="/etc/haproxy/haproxy.cfg.bak"
 
 # CONFIGURACION DUCKDNS
 
-# SEBASTIAN
-DUCKDNS_DOMAIN="david-prosody.duckdns.org" # CAMBIAR POR DOMINIO DE PROSODY
-DUCKDNS_TOKEN="d9c2144c-529b-4781-80b7-20ff1a7595de" # PONER TOKEN DE CUENTA
 
-SSL_PATH="/etc/letsencrypt/live/$DUCKDNS_DOMAIN"
+SSL_PATH="/etc/letsencrypt/live/david-prosody.duckdns.org"
 CERT_PATH="$SSL_PATH/fullchain.pem"
 LOG_FILE="/var/log/script.log"
 
@@ -21,7 +18,7 @@ exec > >(tee -a $LOG_FILE) 2>&1
 mkdir -p /home/ubuntu/duckdns
 
 cat <<EOL > /home/ubuntu/duckdns/duck.sh
-echo url="https://www.duckdns.org/update?domains=$DUCKDNS_DOMAIN&token=$DUCKDNS_TOKEN&ip=" | curl -k -o /home/ubuntu/duckdns/duck.log -K -
+echo url="https://www.duckdns.org/update?domains=david-prosody.duckdns.org&token=d9c2144c-529b-4781-80b7-20ff1a7595de&ip=" | curl -k -o /home/ubuntu/duckdns/duck.log -K -
 EOL
 
 sudo chown ubuntu:ubuntu /home/ubuntu/duckdns/duck.sh
@@ -44,15 +41,15 @@ sudo apt update && sudo DEBIAN_FRONTEND=noninteractive apt install certbot -y
 if [ -f "$CERT_PATH" ]; then
     sudo certbot renew --non-interactive --quiet
 else
-    sudo certbot certonly --standalone -d $DUCKDNS_DOMAIN --non-interactive --agree-tos -m admin@$DUCKDNS_DOMAIN
+    sudo certbot certonly --standalone -d david-prosody.duckdns.org --non-interactive --agree-tos -m admin@david-prosody.duckdns.org
 fi
 
 # FUSIONAR ARCHIVOS DE CERTIFICADO
-sudo cat /etc/letsencrypt/live/$DUCKDNS_DOMAIN/fullchain.pem /etc/letsencrypt/live/$DUCKDNS_DOMAIN/privkey.pem | sudo tee /etc/letsencrypt/live/$DUCKDNS_DOMAIN/haproxy.pem > /dev/null
+sudo cat /etc/letsencrypt/live/david-prosody.duckdns.org/fullchain.pem /etc/letsencrypt/live/david-prosody.duckdns.org/privkey.pem | sudo tee /etc/letsencrypt/live/david-prosody.duckdns.org/haproxy.pem > /dev/null
 
 # DAR PERMISOS AL CERTIFICADO
-sudo chmod 644 /etc/letsencrypt/live/$DUCKDNS_DOMAIN/haproxy.pem
-sudo chmod 755 -R /etc/letsencrypt/live/$DUCKDNS_DOMAIN
+sudo chmod 644 /etc/letsencrypt/live/david-prosody.duckdns.org/haproxy.pem
+sudo chmod 755 -R /etc/letsencrypt/live/david-prosody.duckdns.org
 sudo chmod 755 /etc/letsencrypt/live/
 
 # INSTALACION DE HAPROXY
@@ -98,7 +95,7 @@ frontend xmpp_front
 
 frontend http_xmpp
     bind *:80
-    bind *:443 ssl crt /etc/letsencrypt/live/$DUCKDNS_DOMAIN/haproxy.pem
+    bind *:443 ssl crt /etc/letsencrypt/live/david-prosody.duckdns.org/haproxy.pem
     mode http
     redirect scheme https if !{ ssl_fc }
     default_backend http_back
