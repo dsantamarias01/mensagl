@@ -18,7 +18,7 @@ exec > >(tee -a $LOG_FILE) 2>&1
 mkdir -p /home/ubuntu/duckdns
 
 cat <<EOL > /home/ubuntu/duckdns/duck.sh
-echo url="https://www.duckdns.org/update?domains=david-prosody.duckdns.org&token=d9c2144c-529b-4781-80b7-20ff1a7595de&ip=" | curl -k -o /home/ubuntu/duckdns/duck.log -K -
+echo url="https://www.duckdns.org/update?domains=david-prosody.duckdns.org&token=c452df5a-e345-4ab1-bbb4-a4d7d9f75d80=" | curl -k -o /home/ubuntu/duckdns/duck.log -K -
 EOL
 
 sudo chown ubuntu:ubuntu /home/ubuntu/duckdns/duck.sh
