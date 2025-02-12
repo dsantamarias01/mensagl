@@ -206,7 +206,7 @@ PRIVATE_IP="10.228.1.10"
 INSTANCE_TYPE="t2.micro"
 VOLUME_SIZE=8
 
-USER_DATA_SCRIPT=$(cat <<EOF
+_DATA_SCRIPT=$(cat <<EOF
 #!/bin/bash
 # CAMBIAR LINK DE DESCARGA
 sudo curl -o /home/ubuntu/setup.sh https://raw.githubusercontent.com/dsantamarias01/mensagl/refs/heads/main/mensagl-main/AWS-CLI/AWS-DATA-USER/haproxy_prosody.sh
@@ -552,129 +552,77 @@ PRIVATE_IP="10.228.4.10"
 
 USER_DATA_SCRIPT=$(cat <<EOF
 #!/bin/bash
-##############################
-#  INSTALACION WP / PLUGINS  #
-##############################
+# Actualizar el sistema
+sudo rm -rf /var/lib/apt/lists/*
+sudo apt-get update && sudo DEBIAN_FRONTEND=noninteractive apt install -y apache2 curl git unzip ghostscript libapache2-mod-php mysql-server php php-bcmath php-curl php-imagick php-intl php-json php-mbstring php-mysql php-xml
 
-# Variables
-WP_PATH="/var/www/html"
-WP_URL="https://david-wordpress.duckdns.org"
-ROLE_NAME="cliente_soporte"
-SSL_CERT="/etc/apache2/ssl/david-wordpress.duckdns.org/fullchain.pem"
-SSL_KEY="/etc/apache2/ssl/david-wordpress.duckdns.org/privkey.pem"
-LOG_FILE="/var/log/wp_install.log"
-# Funcion para registrar mensajes
-log() {
-    echo "$1" | tee -a "$LOG_FILE"
-}
-
-# Funcion para esperar a que la base de datos esté disponible
-wait_for_db() {
-    log "Esperando a que la base de datos este disponible en $RDS_ENDPOINT..."
-    while ! mysql -h "$RDS_ENDPOINT" -u "$DB_USERNAME" -p"$DB_PASSWORD" -e "SELECT 1" &>/dev/null; do
-        log "Base de datos no disponible, esperando 10 segundos..."
-        sleep 10
-    done
-    log "Base de datos disponible!"
-}
-
-# Esperar a que la base de datos esté disponible
-wait_for_db
-
-# Actualizar e instalar dependencias necesarias
-log "Actualizando paquetes e instalando dependencias..."
-sudo apt update
-sudo add-apt-repository universe -y
-sudo apt install -y apache2 mysql-client php php-mysql libapache2-mod-php php-curl php-xml php-mbstring php-zip curl git unzip
+# Instalar las dependencias de WordPress
+sudo rm -rf /var/lib/apt/lists/*
+sudo apt-get update
+sudo DEBIAN_FRONTEND=noninteractive apt install -y apache2 curl rsync git unzip ghostscript libapache2-mod-php mysql-server php php-bcmath php-curl php-imagick php-intl php-json php-mbstring php-mysql php-xml
 
 # Instalar WP-CLI
-log "Instalando WP-CLI..."
 curl -O https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar
 chmod +x wp-cli.phar
-sudo mv wp-cli.phar /usr/local/bin/wp
+sudo mv wp-cli.phar /usr/local/bin/wp-cli
 
-# Limpiar el directorio de Apache
-log "Limpiando el directorio de Apache..."
+# Limpiar el directorio web de nuestro servicio
 sudo rm -rf /var/www/html/*
 sudo chmod -R 755 /var/www/html
-sudo chown -R ubuntu:ubuntu /var/www/html
+sudo chown -R www-data:www-data /var/www/html
 
-# Crear base de datos y usuario, si no existen
-log "Creando base de datos y usuario (si no existe)..."
-mysql -h $RDS_ENDPOINT -u $DB_USERNAME -p$DB_PASSWORD <<EOF
-CREATE DATABASE IF NOT EXISTS $DB_NAME;
-CREATE USER IF NOT EXISTS '$DB_USERNAME'@'%' IDENTIFIED BY '$DB_PASSWORD';
-GRANT ALL PRIVILEGES ON $DB_NAME.* TO '$DB_USERNAME'@'%';
-FLUSH PRIVILEGES;
-
-# Descargar WordPress
-log "Descargando WordPress..."
-wp core download --path=/var/www/html
-
-# Eliminar el archivo wp-config.php existente si hay uno
-rm -f /var/www/html/wp-config.php
-
-# Configurar wp-config.php
-log "Configurando wp-config.php..."
-wp core config --dbname="$DB_NAME" --dbuser="$DB_USERNAME" --dbpass="$DB_PASSWORD" --dbhost="$RDS_ENDPOINT" --dbprefix=wp_ --path=/var/www/html
-
-# Instalar WordPress
-log "Instalando WordPress..."
-wp core install --url="$WP_URL" --title="CMS - TICKETING" --admin_user="$DB_USERNAME" --admin_password="$DB_PASSWORD" --admin_email="dsantamarias01@educantabria.es" --path=/var/www/html
-
-# Instalar plugins adicionales
-log "Instalando plugins..."
-wp plugin install supportcandy --activate --path=/var/www/html
-wp plugin install user-registration --activate --path=/var/www/html
-
-wp plugin install wps-hide-login --activate
-wp option update wps_hide_login_url $DB_USERNAME
-# Crear paginas de registro y soporte
-log "Creando paginas de registro y soporte..."
-REGISTER_PAGE_ID=$(wp post create --post_title="Registro de Usuarios" --post_content="[user_registration_form]" --post_status="publish" --post_type="page" --path=/var/www/html --porcelain)
-SUPPORT_PAGE_ID=$(wp post create --post_title="Soporte de Tickets" --post_content="[supportcandy]" --post_status="publish" --post_type="page" --path=/var/www/html --porcelain)
-
-# Habilitar el registro de usuarios
-wp option update users_can_register 1 --path=/var/www/html
-wp option update default_role "subscriber" --path=/var/www/html
-
-# Crear rol personalizado "Cliente de soporte"
-log "Creando rol personalizado 'Cliente de soporte'..."
-wp role create "$ROLE_NAME" "Cliente de soporte" --path=/var/www/html
-wp role cap "$ROLE_NAME" "read" --path=/var/www/html
-wp role cap "$ROLE_NAME" "create_ticket" --path=/var/www/html
-wp role cap "$ROLE_NAME" "view_own_ticket" --path=/var/www/html
-
-# Configurar Apache para WordPress con SSL
-log "Configurando Apache para WordPress con SSL..."
-sudo bash -c "cat > /etc/apache2/sites-available/wordpress.conf <<APACHE
-<VirtualHost *:443>
-    ServerAdmin admin@david-wordpress.duckdns.org
-    ServerName  david-wordpress.duckdns.org
-
-    DocumentRoot /var/www/html
-
-    SSLEngine on
-    SSLCertificateFile $SSL_CERT
-    SSLCertificateKeyFile $SSL_KEY
-
-    <Directory /var/www/html>
-        AllowOverride All
-        Require all granted
-    </Directory>
-</VirtualHost>
-APACHE"
-
-# Habilitar el sitio de WordPress y reiniciar Apache
-log "Reiniciando Apache..."
-sudo a2dissite 000-default.conf
-sudo a2ensite wordpress.conf
-sudo a2enmod rewrite ssl
+# Reiniciar Apache para aplicar cambios
+sudo a2enmod rewrite
 sudo systemctl restart apache2
 
-log "¡Instalación completada! Accede a tu WordPress en: $WP_URL"
+# Descargar y configurar WordPress
+sudo -u www-data wp-cli core download --path=/var/www/html
+sudo -u www-data wp-cli core config --dbname=${DB_NAME} --dbuser=${DB_USERNAME} --dbpass=${DB_PASSWORD} --dbhost=${RDS_ENDPOINT} --dbprefix=wp --path=/var/www/html
+sudo -u www-data wp-cli core install --url='https://david-wordpress.duckdns.org' --title='Wordpress equipo 5' --admin_user=${DB_USERNAME} --admin_password=${DB_PASSWORD} --admin_email='dsantamarias01@educantabria.es' --path=/var/www/html
+
+# Instalar y activar plugins
+sudo -u www-data wp-cli plugin install supportcandy --activate --path='/var/www/html'
+sudo -u www-data wp-cli plugin install user-registration --activate --path='/var/www/html'
+sudo -u www-data wp-cli plugin install wps-hide-login --activate
+sudo -u www-data wp-cli option update wps_hide_login_url ${DB_USERNAME}-admin
+
+# Configurar roles y permisos
+sudo -u www-data wp-cli cap add "subscriber" "read" --path=/var/www/html
+sudo -u www-data wp-cli cap add "subscriber" "create_ticket" --path=/var/www/html
+sudo -u www-data wp-cli cap add "subscriber" "view_own_ticket" --path=/var/www/html
+sudo -u www-data wp-cli option update default_role "subscriber" --path=/var/www/html
+
+# Habilitar registros y formularios
+sudo -u www-data wp-cli option update users_can_register 1 --path=/var/www/html
+sudo -u www-data wp-cli post create --post_title="Mi cuenta" --post_content="[user_registration_my_account]" --post_status="publish" --post_type="page" --path=/var/www/html --porcelain
+sudo -u www-data wp-cli post create --post_title="Registro" --post_content="[user_registration_form id="9"]" --post_status="publish" --post_type="page" --path=/var/www/html --porcelain
+sudo -u www-data wp-cli post create --post_title="Tickets" --post_content="[supportcandy]" --post_status="publish" --post_type="page" --path=/var/www/html --porcelain
+
+# Ajustar configuración de wp-config.php
+sudo sed -i '1d' /var/www/html/wp-config.php
+sudo sed -i '1i\
+<?php if (isset($_SERVER["HTTP_X_FORWARDED_FOR"])) {\
+    $list = explode(",", $_SERVER["HTTP_X_FORWARDED_FOR"]);\
+    $_SERVER["REMOTE_ADDR"] = $list[0];\
+}\
+$_SERVER["HTTP_HOST"] = "david-wordpress.duckdns.org";\
+$_SERVER["REMOTE_ADDR"] = "david-wordpress.duckdns.org";\
+$_SERVER["SERVER_ADDR"] = "david-wordpress.duckdns.org";\
+' /var/www/html/wp-config.php
+
+# Configurar SSL
+sudo scp -i ${KEY_NAME}.pem -o StrictHostKeyChecking=no ubuntu@10.228.2.10:/home/ubuntu/certwordpress/* /home/ubuntu/
+sudo cp /home/ubuntu/default-ssl.conf /etc/apache2/sites-available/default-ssl.conf
+sudo a2enmod ssl
+sudo a2enmod headers
+sudo a2ensite default-ssl.conf
+sudo a2dissite 000-default.conf
+sudo systemctl reload apache2
+
+echo "¡Instalación completada! Accede a tu WordPress en: https://david-wordpress.duckdns.org"
 EOF
 )
+
 INSTANCE_ID=$(aws ec2 run-instances \
     --image-id "$AMI_ID" \
     --instance-type "$INSTANCE_TYPE" \
@@ -695,123 +643,77 @@ PRIVATE_IP="10.228.4.11"
 
 USER_DATA_SCRIPT=$(cat <<EOF
 #!/bin/bash
-##############################
-#  INSTALACION WP / PLUGINS  #
-##############################
+# Actualizar el sistema
+sudo rm -rf /var/lib/apt/lists/*
+sudo apt-get update && sudo DEBIAN_FRONTEND=noninteractive apt install -y apache2 curl git unzip ghostscript libapache2-mod-php mysql-server php php-bcmath php-curl php-imagick php-intl php-json php-mbstring php-mysql php-xml
 
-# Variables
-WP_PATH="/var/www/html"
-WP_URL="https://david-wordpress.duckdns.org"
-ROLE_NAME="cliente_soporte"
-SSL_CERT="/etc/apache2/ssl/david-wordpress.duckdns.org/fullchain.pem"
-SSL_KEY="/etc/apache2/ssl/david-wordpress.duckdns.org/privkey.pem"
-LOG_FILE="/var/log/wp_install.log"
-# Funcion para registrar mensajes
-log() {
-    echo "$1" | tee -a "$LOG_FILE"
-}
-
-# Funcion para esperar a que la base de datos esté disponible
-wait_for_db() {
-    log "Esperando a que la base de datos este disponible en $RDS_ENDPOINT..."
-    while ! mysql -h "$RDS_ENDPOINT" -u "$DB_USERNAME" -p"$DB_PASSWORD" -e "SELECT 1" &>/dev/null; do
-        log "Base de datos no disponible, esperando 10 segundos..."
-        sleep 10
-    done
-    log "Base de datos disponible!"
-}
-
-# Esperar a que la base de datos esté disponible
-wait_for_db
-
-# Actualizar e instalar dependencias necesarias
-log "Actualizando paquetes e instalando dependencias..."
-sudo apt update
-sudo add-apt-repository universe -y
-sudo apt install -y apache2 mysql-client php php-mysql libapache2-mod-php php-curl php-xml php-mbstring php-zip curl git unzip
+# Instalar las dependencias de WordPress
+sudo rm -rf /var/lib/apt/lists/*
+sudo apt-get update
+sudo DEBIAN_FRONTEND=noninteractive apt install -y apache2 curl rsync git unzip ghostscript libapache2-mod-php mysql-server php php-bcmath php-curl php-imagick php-intl php-json php-mbstring php-mysql php-xml
 
 # Instalar WP-CLI
-log "Instalando WP-CLI..."
 curl -O https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar
 chmod +x wp-cli.phar
-sudo mv wp-cli.phar /usr/local/bin/wp
+sudo mv wp-cli.phar /usr/local/bin/wp-cli
 
-# Limpiar el directorio de Apache
-log "Limpiando el directorio de Apache..."
+# Limpiar el directorio web de nuestro servicio
 sudo rm -rf /var/www/html/*
 sudo chmod -R 755 /var/www/html
-sudo chown -R ubuntu:ubuntu /var/www/html
+sudo chown -R www-data:www-data /var/www/html
 
-# Crear base de datos y usuario, si no existen
-log "Creando base de datos y usuario (si no existe)..."
-mysql -h $RDS_ENDPOINT -u $DB_USERNAME -p$DB_PASSWORD <<EOF
-CREATE DATABASE IF NOT EXISTS $DB_NAME;
-CREATE USER IF NOT EXISTS '$DB_USERNAME'@'%' IDENTIFIED BY '$DB_PASSWORD';
-GRANT ALL PRIVILEGES ON $DB_NAME.* TO '$DB_USERNAME'@'%';
-FLUSH PRIVILEGES;
-
-# Descargar WordPress
-log "Descargando WordPress..."
-wp core download --path=/var/www/html
-
-# Eliminar el archivo wp-config.php existente si hay uno
-rm -f /var/www/html/wp-config.php
-
-# Configurar wp-config.php
-log "Configurando wp-config.php..."
-wp core config --dbname="$DB_NAME" --dbuser="$DB_USERNAME" --dbpass="$DB_PASSWORD" --dbhost="$RDS_ENDPOINT" --dbprefix=wp_ --path=/var/www/html
-
-# Instalar WordPress
-log "Instalando WordPress..."
-wp core install --url="$WP_URL" --title="CMS - TICKETING" --admin_user="$DB_USERNAME" --admin_password="$DB_PASSWORD" --admin_email="dsantamarias01@educantabria.es" --path=/var/www/html
-
-# Instalar plugins adicionales
-log "Instalando plugins..."
-wp plugin install supportcandy --activate --path=/var/www/html
-wp plugin install user-registration --activate --path=/var/www/html
-
-
-# Habilitar el registro de usuarios
-wp option update users_can_register 1 --path=/var/www/html
-wp option update default_role "subscriber" --path=/var/www/html
-
-# Crear rol personalizado "Cliente de soporte"
-log "Creando rol personalizado 'Cliente de soporte'..."
-wp role create "$ROLE_NAME" "Cliente de soporte" --path=/var/www/html
-wp role cap "$ROLE_NAME" "read" --path=/var/www/html
-wp role cap "$ROLE_NAME" "create_ticket" --path=/var/www/html
-wp role cap "$ROLE_NAME" "view_own_ticket" --path=/var/www/html
-
-# Configurar Apache para WordPress con SSL
-log "Configurando Apache para WordPress con SSL..."
-sudo bash -c "cat > /etc/apache2/sites-available/wordpress.conf <<APACHE
-<VirtualHost *:443>
-    ServerAdmin admin@david-wordpress.duckdns.org
-    ServerName  david-wordpress.duckdns.org
-
-    DocumentRoot /var/www/html
-
-    SSLEngine on
-    SSLCertificateFile $SSL_CERT
-    SSLCertificateKeyFile $SSL_KEY
-
-    <Directory /var/www/html>
-        AllowOverride All
-        Require all granted
-    </Directory>
-</VirtualHost>
-APACHE"
-
-# Habilitar el sitio de WordPress y reiniciar Apache
-log "Reiniciando Apache..."
-sudo a2dissite 000-default.conf
-sudo a2ensite wordpress.conf
-sudo a2enmod rewrite ssl
+# Reiniciar Apache para aplicar cambios
+sudo a2enmod rewrite
 sudo systemctl restart apache2
 
-log "¡Instalación completada! Accede a tu WordPress en: $WP_URL"
+# Descargar y configurar WordPress
+sudo -u www-data wp-cli core download --path=/var/www/html
+sudo -u www-data wp-cli core config --dbname=${DB_NAME} --dbuser=${DB_USERNAME} --dbpass=${DB_PASSWORD} --dbhost=${RDS_ENDPOINT} --dbprefix=wp --path=/var/www/html
+sudo -u www-data wp-cli core install --url='https://david-wordpress.duckdns.org' --title='Wordpress equipo 5' --admin_user=${DB_USERNAME} --admin_password=${DB_PASSWORD} --admin_email='dsantamarias01@educantabria.es' --path=/var/www/html
+
+# Instalar y activar plugins
+sudo -u www-data wp-cli plugin install supportcandy --activate --path='/var/www/html'
+sudo -u www-data wp-cli plugin install user-registration --activate --path='/var/www/html'
+sudo -u www-data wp-cli plugin install wps-hide-login --activate
+sudo -u www-data wp-cli option update wps_hide_login_url ${DB_USERNAME}-admin
+
+# Configurar roles y permisos
+sudo -u www-data wp-cli cap add "subscriber" "read" --path=/var/www/html
+sudo -u www-data wp-cli cap add "subscriber" "create_ticket" --path=/var/www/html
+sudo -u www-data wp-cli cap add "subscriber" "view_own_ticket" --path=/var/www/html
+sudo -u www-data wp-cli option update default_role "subscriber" --path=/var/www/html
+
+# Habilitar registros y formularios
+sudo -u www-data wp-cli option update users_can_register 1 --path=/var/www/html
+sudo -u www-data wp-cli post create --post_title="Mi cuenta" --post_content="[user_registration_my_account]" --post_status="publish" --post_type="page" --path=/var/www/html --porcelain
+sudo -u www-data wp-cli post create --post_title="Registro" --post_content="[user_registration_form id="9"]" --post_status="publish" --post_type="page" --path=/var/www/html --porcelain
+sudo -u www-data wp-cli post create --post_title="Tickets" --post_content="[supportcandy]" --post_status="publish" --post_type="page" --path=/var/www/html --porcelain
+
+# Ajustar configuración de wp-config.php
+sudo sed -i '1d' /var/www/html/wp-config.php
+sudo sed -i '1i\
+<?php if (isset($_SERVER["HTTP_X_FORWARDED_FOR"])) {\
+    $list = explode(",", $_SERVER["HTTP_X_FORWARDED_FOR"]);\
+    $_SERVER["REMOTE_ADDR"] = $list[0];\
+}\
+$_SERVER["HTTP_HOST"] = "david-wordpress.duckdns.org";\
+$_SERVER["REMOTE_ADDR"] = "david-wordpress.duckdns.org";\
+$_SERVER["SERVER_ADDR"] = "david-wordpress.duckdns.org";\
+' /var/www/html/wp-config.php
+
+# Configurar SSL
+sudo scp -i ${KEY_NAME}.pem -o StrictHostKeyChecking=no ubuntu@10.228.2.10:/home/ubuntu/certwordpress/* /home/ubuntu/
+sudo cp /home/ubuntu/default-ssl.conf /etc/apache2/sites-available/default-ssl.conf
+sudo a2enmod ssl
+sudo a2enmod headers
+sudo a2ensite default-ssl.conf
+sudo a2dissite 000-default.conf
+sudo systemctl reload apache2
+
+echo "¡Instalación completada! Accede a tu WordPress en: https://david-wordpress.duckdns.org"
 EOF
 )
+
 INSTANCE_ID=$(aws ec2 run-instances \
     --image-id "$AMI_ID" \
     --instance-type "$INSTANCE_TYPE" \
