@@ -210,7 +210,7 @@ VOLUME_SIZE=8
 USER_DATA_SCRIPT=$(cat <<EOF
 #!/bin/bash
 # CAMBIAR LINK DE DESCARGA
-sudo curl -o /home/ubuntu/setup.sh https://raw.githubusercontent.com/srestrepoj01/mensagl/refs/heads/main/AWS-CLI/AWS-DATA-USER/haproxy_prosody.sh
+sudo curl -o /home/ubuntu/setup.sh https://raw.githubusercontent.com/dsantamarias01/mensagl/refs/heads/main/mensagl-main/AWS-CLI/AWS-DATA-USER/haproxy_prosody.sh
 sudo chown ubuntu:ubuntu setup.sh
 sudo chmod +x /home/ubuntu/setup.sh
 sudo bash /home/ubuntu/setup.sh
@@ -222,8 +222,8 @@ sudo chmod 400 /home/ubuntu/.ssh/${KEY_NAME}.pem
 sudo chown ubuntu:ubuntu /home/ubuntu/.ssh/${KEY_NAME}.pem
 
 # Copiar A prosody, para configurarlo en ambas instancias del cluster
-sudo scp -i "/home/ubuntu/.ssh/${KEY_NAME}.pem" -r /etc/letsencrypt/live/srestrepoj-prosody.duckdns.org ubuntu@10.228.3.20:/home/ubuntu
-sudo scp -i "/home/ubuntu/.ssh/${KEY_NAME}.pem" -r /etc/letsencrypt/live/srestrepoj-prosody.duckdns.org ubuntu@10.228.3.30:/home/ubuntu
+sudo scp -i "/home/ubuntu/.ssh/${KEY_NAME}.pem" -r /etc/letsencrypt/live/davidprosody3.duckdns.org ubuntu@10.228.3.20:/home/ubuntu
+sudo scp -i "/home/ubuntu/.ssh/${KEY_NAME}.pem" -r /etc/letsencrypt/live/davidprosody3.duckdns.org ubuntu@10.228.3.30:/home/ubuntu
 
 EOF
 )
@@ -249,7 +249,7 @@ VOLUME_SIZE=8
 USER_DATA_SCRIPT=$(cat <<EOF
 #!/bin/bash
 # CAMBIAR LINK DE DESCARGA
-sudo curl -o /home/ubuntu/setup.sh https://raw.githubusercontent.com/srestrepoj01/mensagl/refs/heads/main/AWS-CLI/AWS-DATA-USER/haproxy_wordpress.sh
+sudo curl -o /home/ubuntu/setup.sh https://raw.githubusercontent.com/dsantamarias01/mensagl/refs/heads/main/mensagl-main/AWS-CLI/AWS-DATA-USER/haproxy_wordpress.sh
 sudo chown ubuntu:ubuntu setup.sh
 sudo chmod +x /home/ubuntu/setup.sh
 sudo bash /home/ubuntu/setup.sh
@@ -261,8 +261,8 @@ sudo chmod 400 /home/ubuntu/.ssh/${KEY_NAME}.pem
 sudo chown ubuntu:ubuntu /home/ubuntu/.ssh/${KEY_NAME}.pem
 
 # Copiar A wordpress, para configurarlo, en ambas instancias del cluster
-sudo scp -i "/home/ubuntu/.ssh/${KEY_NAME}.pem" -r /etc/letsencrypt/live/srestrepoj-wpd.duckdns.org ubuntu@10.228.4.10:/home/ubuntu
-sudo scp -i "/home/ubuntu/.ssh/${KEY_NAME}.pem" -r /etc/letsencrypt/live/srestrepoj-wpd.duckdns.org ubuntu@10.228.4.11:/home/ubuntu
+sudo scp -i "/home/ubuntu/.ssh/${KEY_NAME}.pem" -r /etc/letsencrypt/live/wordpressdavid2.duckdns.org ubuntu@10.228.4.10:/home/ubuntu
+sudo scp -i "/home/ubuntu/.ssh/${KEY_NAME}.pem" -r /etc/letsencrypt/live/wordpressdavid2.duckdns.org ubuntu@10.228.4.11:/home/ubuntu
 EOF
 )
 
@@ -348,8 +348,8 @@ echo "Configurando Prosody..." | tee -a $LOG_FILE
 sudo tee /etc/prosody/prosody.cfg.lua > /dev/null <<EOL
 -- Prosody Configuration
 
-VirtualHost "srestrepoj-prosody.duckdns.org"
-admins = { "admin@srestrepoj-prosody.duckdns.org" }
+VirtualHost "davidprosody3.duckdns.org"
+admins = { "admin@davidprosody3.duckdns.org" }
 
 modules_enabled = {
     "roster";
@@ -395,10 +395,10 @@ echo "Reiniciando Prosody..." | tee -a $LOG_FILE
 sudo systemctl restart prosody
 
 # Crear usuario administrador
-echo "Creando usuario admin@srestrepoj-prosody.duckdns.org..." | tee -a $LOG_FILE
-sudo prosodyctl register admin srestrepoj-prosody.duckdns.org "Admin123"
+echo "Creando usuario admin@davidprosody3.duckdns.org..." | tee -a $LOG_FILE
+sudo prosodyctl register admin davidprosody3.duckdns.org "Admin123"
 
-echo "Prosody instalado y configurado con éxito en srestrepoj-prosody.duckdns.org" | tee -a $LOG_FILE
+echo "Prosody instalado y configurado con éxito en davidprosody3.duckdns.org" | tee -a $LOG_FILE
 EOF
 )
  INSTANCE_ID=$(aws ec2 run-instances \
@@ -436,7 +436,7 @@ sudo tee /etc/prosody/prosody.cfg.lua > /dev/null <<EOL
 -- Prosody Configuration
 
 VirtualHost "srestrepoj-prosody.duckdns.org"
-admins = { "admin@srestrepoj-prosody.duckdns.org" }
+admins = { "admin@davidprosody3.duckdns.org" }
 
 modules_enabled = {
     "roster";
@@ -482,10 +482,10 @@ echo "Reiniciando Prosody..." | tee -a $LOG_FILE
 sudo systemctl restart prosody
 
 # Crear usuario administrador
-echo "Creando usuario admin@srestrepoj-prosody.duckdns.org..." | tee -a $LOG_FILE
-sudo prosodyctl register admin srestrepoj-prosody.duckdns.org "Admin123"
+echo "Creando usuario admin@davidprosody3.duckdns.org..." | tee -a $LOG_FILE
+sudo prosodyctl register admin davidprosody3.duckdns.org "Admin123"
 
-echo "Prosody instalado y configurado con éxito en srestrepoj-prosody.duckdns.org" | tee -a $LOG_FILE
+echo "Prosody instalado y configurado con éxito en davidprosody3.duckdns.org" | tee -a $LOG_FILE
 EOF
 )
  INSTANCE_ID=$(aws ec2 run-instances \
@@ -546,7 +546,7 @@ mysql -h ${RDS_ENDPOINT} -u ${DB_USERNAME} -p${DB_PASSWORD} -e "FLUSH PRIVILEGES
 # Descargar y configurar WordPress
 sudo -u www-data wp-cli core download --path=/var/www/html
 sudo -u www-data wp-cli core config --dbname=wordpressdb --dbuser=${DB_USERNAME} --dbpass=${DB_PASSWORD} --dbhost=${RDS_ENDPOINT} --dbprefix=wp --path=/var/www/html
-sudo -u www-data wp-cli core install --url='https://srestrepoj-wordp.duckdns.org' --title='Wordpress Sebastian' --admin_user='admin' --admin_password='Admin123' --admin_email='admin@example.com' --path=/var/www/html
+sudo -u www-data wp-cli core install --url='https://wordpressdavid2.duckdns.org' --title='Wordpress David' --admin_user='admin' --admin_password='Admin123' --admin_email='dsantamarias01@educantabria.es' --path=/var/www/html
 
 # Instalar y activar plugins
 sudo -u www-data wp-cli plugin install supportcandy --activate --path='/var/www/html'
@@ -573,9 +573,9 @@ sudo sed -i '1i\
     $list = explode(",", $_SERVER["HTTP_X_FORWARDED_FOR"]);\
     $_SERVER["REMOTE_ADDR"] = $list[0];\
 }\
-$_SERVER["HTTP_HOST"] = "srestrepoj-wordp.duckdns.org";\
-$_SERVER["REMOTE_ADDR"] = "srestrepoj-wordp.duckdns.org";\
-$_SERVER["SERVER_ADDR"] = "srestrepoj-wordp.duckdns.org";\
+$_SERVER["HTTP_HOST"] = "wordpressdavid2.duckdns.org";\
+$_SERVER["REMOTE_ADDR"] = "wordpressdavid2.duckdns.org";\
+$_SERVER["SERVER_ADDR"] = "wordpressdavid2.duckdns.org";\
 ' /var/www/html/wp-config.php
 
 # Configurar SSL
@@ -667,9 +667,9 @@ sudo sed -i '1i\
     $list = explode(",", $_SERVER["HTTP_X_FORWARDED_FOR"]);\
     $_SERVER["REMOTE_ADDR"] = $list[0];\
 }\
-$_SERVER["HTTP_HOST"] = "srestrepoj-wordp.org";\
-$_SERVER["REMOTE_ADDR"] = "srestrepoj-wordp.org";\
-$_SERVER["SERVER_ADDR"] = "srestrepoj-wordp.org";\
+$_SERVER["HTTP_HOST"] = "wordpressdavid2.duckdns.org";\
+$_SERVER["REMOTE_ADDR"] = "wordpressdavid2.duckdns.org";\
+$_SERVER["SERVER_ADDR"] = "wordpressdavid2.duckdns.org";\
 ' /var/www/html/wp-config.php
 
 # Configurar SSL
