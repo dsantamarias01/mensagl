@@ -27,7 +27,7 @@ sudo -u www-data wp-cli core install --url='http://wordpressdavid2.duckdns.org' 
 sudo -u www-data wp-cli plugin install supportcandy --activate --path='/var/www/html'
 sudo -u www-data wp-cli plugin install user-registration --activate --path='/var/www/html'
 sudo -u www-data wp-cli plugin install wps-hide-login --activate --path='/var/www/html'
-sudo -u www-data wp-cli option update wps_hide_login_url admin-sebastian --path='/var/www/html'
+sudo -u www-data wp-cli option update wps_hide_login_url admin-david --path='/var/www/html'
 
 sudo -u www-data wp-cli cap add "subscriber" "read" --path='/var/www/html'
 sudo -u www-data wp-cli cap add "subscriber" "create_ticket" --path='/var/www/html'
