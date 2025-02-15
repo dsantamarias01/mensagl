@@ -3,9 +3,9 @@
 # Variables
 HAPROXY_CFG_PATH="/etc/haproxy/haproxy.cfg"
 BACKUP_CFG_PATH="/etc/haproxy/haproxy.cfg.bak"
-DUCKDNS_DOMAIN="srestrepoj-wordpress01"
-DUCKDNS_TOKEN="d9c2144c-529b-4781-80b7-20ff1a7595de"
-DUCKDNS_DOMAIN_CERT="srestrepoj-wordpress01.duckdns.org"
+DUCKDNS_DOMAIN="wordpressdavid2"
+DUCKDNS_TOKEN="f319b7f5-243b-4e0d-97fa-aeb74fa0b440"
+DUCKDNS_DOMAIN_CERT="wordpressdavid2.duckdns.org"
 SSL_PATH="/etc/letsencrypt/live/${DUCKDNS_DOMAIN}"
 CERT_PATH="${SSL_PATH}/fullchain.pem"
 LOG_FILE="/var/log/script.log"
@@ -45,7 +45,7 @@ if [ -f "${CERT_PATH}" ]; then
     sudo certbot renew --non-interactive --quiet
 else
     # Solicita un nuevo certificado
-    sudo certbot certonly --standalone -d "${DUCKDNS_DOMAIN_CERT}" --non-interactive --agree-tos --email srestrepoj01@educantabria.es
+    sudo certbot certonly --standalone -d "${DUCKDNS_DOMAIN_CERT}" --non-interactive --agree-tos --email dsantamarias01@educantabria.es
 fi
 
 # Combina los archivos de certificado para HAProxy
