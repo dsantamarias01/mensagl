@@ -2,7 +2,7 @@
 # Instalación de Prosody y configuración de base de datos MySQL externa.
 
 # Variables
-db_host="10.228.3.10"
+db_host="10.225.3.10"
 db_user="admin"
 db_password="Admin123"
 db_name="prosody"
@@ -22,11 +22,11 @@ check_instance_status() {
 }
 
 # Verificar el estado de las instancias de la base de datos
-check_instance_status "10.228.3.10"
-check_instance_status "10.228.3.11"
+check_instance_status "10.225.3.10"
+check_instance_status "10.225.3.11"
 
 # Instalación de Prosody
-echo "Instalando Prosody y módulos adicionales..." | tee -a $LOG_FILE
+echo "Instalando Prosody y modulos adicionales..." | tee -a $LOG_FILE
 sudo apt update
 sudo apt install lua-dbi-mysql lua-dbi-postgresql lua-dbi-sqlite3 -y 
 
@@ -35,8 +35,8 @@ echo "Configurando Prosody..." | tee -a $LOG_FILE
 sudo tee /etc/prosody/prosody.cfg.lua > /dev/null <<EOL
 -- Prosody Configuration
 
-VirtualHost "david-prosody.duckdns.org"
-admins = { "admin@david-prosody.duckdns.org" }
+VirtualHost "srestrepoj-prosody.duckdns.org"
+admins = { "admin@srestrepoj-prosody.duckdns.org" }
 
 modules_enabled = {
     "roster";
@@ -82,7 +82,7 @@ echo "Reiniciando Prosody..." | tee -a $LOG_FILE
 sudo systemctl restart prosody
 
 # Crear usuario administrador
-echo "Creando usuario admin@david-prosody.duckdns.org..." | tee -a $LOG_FILE
-sudo prosodyctl register admin david-prosody.duckdns.org "Admin123"
+echo "Creando usuario admin@srestrepoj-prosody.duckdns.org..." | tee -a $LOG_FILE
+sudo prosodyctl register admin srestrepoj-prosody.duckdns.org "Admin123"
 
-echo "Prosody instalado y configurado con éxito en david-prosody.duckdns.org" | tee -a $LOG_FILE
+echo "Prosody instalado y configurado con éxito en srestrepoj-prosody.duckdns.org" | tee -a $LOG_FILE
