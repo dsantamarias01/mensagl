@@ -101,8 +101,8 @@ frontend wordpress_front
 backend wordpress_back
     mode http
     balance source
-    server wordpress1 10.225.4.10:80 check
-    server wordpress2 10.225.4.11:80 check
+    server wordpress1 10.228.4.10:80 check
+    server wordpress2 10.228.4.11:80 check
 EOL
 
 # Reinicia y habilita HAProxy

@@ -47,16 +47,16 @@ exec > "$LOG_FILE" 2>&1
 ##############################
 
 # Crear VPC
-VPC_ID=$(aws ec2 create-vpc --cidr-block "10.225.0.0/16" --query 'Vpc.VpcId' --output text)
+VPC_ID=$(aws ec2 create-vpc --cidr-block "10.228.0.0/16" --query 'Vpc.VpcId' --output text)
 aws ec2 create-tags --resources "$VPC_ID" --tags Key=Name,Value="vpc-mensagl-2025-${NOMBRE_ALUMNO}"
 
 # Crear Subnets publicas
-SUBNET_PUBLIC1_ID=$(aws ec2 create-subnet --vpc-id "$VPC_ID" --cidr-block "10.225.1.0/24" --availability-zone "${REGION}a" --query 'Subnet.SubnetId' --output text)
-SUBNET_PUBLIC2_ID=$(aws ec2 create-subnet --vpc-id "$VPC_ID" --cidr-block "10.225.2.0/24" --availability-zone "${REGION}b" --query 'Subnet.SubnetId' --output text)
+SUBNET_PUBLIC1_ID=$(aws ec2 create-subnet --vpc-id "$VPC_ID" --cidr-block "10.228.1.0/24" --availability-zone "${REGION}a" --query 'Subnet.SubnetId' --output text)
+SUBNET_PUBLIC2_ID=$(aws ec2 create-subnet --vpc-id "$VPC_ID" --cidr-block "10.228.2.0/24" --availability-zone "${REGION}b" --query 'Subnet.SubnetId' --output text)
 
 # Crear Subnets privadas
-SUBNET_PRIVATE1_ID=$(aws ec2 create-subnet --vpc-id "$VPC_ID" --cidr-block "10.225.3.0/24" --availability-zone "${REGION}a" --query 'Subnet.SubnetId' --output text)
-SUBNET_PRIVATE2_ID=$(aws ec2 create-subnet --vpc-id "$VPC_ID" --cidr-block "10.225.4.0/24" --availability-zone "${REGION}b" --query 'Subnet.SubnetId' --output text)
+SUBNET_PRIVATE1_ID=$(aws ec2 create-subnet --vpc-id "$VPC_ID" --cidr-block "10.228.3.0/24" --availability-zone "${REGION}a" --query 'Subnet.SubnetId' --output text)
+SUBNET_PRIVATE2_ID=$(aws ec2 create-subnet --vpc-id "$VPC_ID" --cidr-block "10.228.4.0/24" --availability-zone "${REGION}b" --query 'Subnet.SubnetId' --output text)
 
 # Crear Internet Gateway
 IGW_ID=$(aws ec2 create-internet-gateway --query 'InternetGateway.InternetGatewayId' --output text)
@@ -110,7 +110,7 @@ aws ec2 authorize-security-group-ingress --group-id "$SG_PROXY_PROSODY_ID" --pro
 aws ec2 authorize-security-group-ingress --group-id "$SG_PROXY_PROSODY_ID" --protocol tcp --port 3306 --cidr "0.0.0.0/0"
 aws ec2 authorize-security-group-ingress --group-id "$SG_PROXY_PROSODY_ID" --protocol tcp --port 443 --cidr "0.0.0.0/0"
 aws ec2 authorize-security-group-ingress --group-id "$SG_PROXY_PROSODY_ID" --protocol tcp --port 80 --cidr "0.0.0.0/0"
-aws ec2 authorize-security-group-ingress --group-id "$SG_MYSQL_ID" --protocol tcp --port 3306 --cidr "10.225.1.0/24"
+aws ec2 authorize-security-group-ingress --group-id "$SG_MYSQL_ID" --protocol tcp --port 3306 --cidr "10.228.1.0/24"
 aws ec2 authorize-security-group-egress --group-id  "$SG_PROXY_PROSODY_ID" --protocol -1 --port all --cidr "0.0.0.0/0"
 
 # Grupo de seguridad para el CMS
@@ -206,7 +206,7 @@ echo "RDS Endpoint: $RDS_ENDPOINT"
 INSTANCE_NAME="proxy-prosody"
 SUBNET_ID="${SUBNET_PUBLIC1_ID}"
 SECURITY_GROUP_ID="${SG_PROXY_PROSODY_ID}"
-PRIVATE_IP="10.225.1.10"
+PRIVATE_IP="10.228.1.10"
 INSTANCE_TYPE="t2.micro"
 VOLUME_SIZE=8
 
@@ -225,8 +225,8 @@ VOLUME_SIZE=8
 # sudo chown ubuntu:ubuntu /home/ubuntu/.ssh/${KEY_NAME}.pem
 
 # # Copiar A prosody, para configurarlo en ambas instancias del cluster
-# sudo scp -i "/home/ubuntu/.ssh/${KEY_NAME}.pem" -r /etc/letsencrypt/live/srestrepoj-prosody.duckdns.org ubuntu@10.225.3.20:/home/ubuntu
-# sudo scp -i "/home/ubuntu/.ssh/${KEY_NAME}.pem" -r /etc/letsencrypt/live/srestrepoj-prosody.duckdns.org ubuntu@10.225.3.30:/home/ubuntu
+# sudo scp -i "/home/ubuntu/.ssh/${KEY_NAME}.pem" -r /etc/letsencrypt/live/srestrepoj-prosody.duckdns.org ubuntu@10.228.3.20:/home/ubuntu
+# sudo scp -i "/home/ubuntu/.ssh/${KEY_NAME}.pem" -r /etc/letsencrypt/live/srestrepoj-prosody.duckdns.org ubuntu@10.228.3.30:/home/ubuntu
 
 # EOF
 # )
@@ -244,7 +244,7 @@ echo "${INSTANCE_NAME} creada: ${INSTANCE_ID}"
 # proxy-wordpress
 INSTANCE_NAME="proxy-wordpress"
 SUBNET_ID="${SUBNET_PUBLIC2_ID}"
-PRIVATE_IP="10.225.2.10"
+PRIVATE_IP="10.228.2.10"
 INSTANCE_TYPE="t2.micro"
 SECURITY_GROUP_ID="${SG_PROXY_WP_ID}"
 VOLUME_SIZE=8
@@ -264,8 +264,8 @@ VOLUME_SIZE=8
 # sudo chown ubuntu:ubuntu /home/ubuntu/.ssh/${KEY_NAME}.pem
 
 # # Copiar A wordpress, para configurarlo, en ambas instancias del cluster
-# sudo scp -i "/home/ubuntu/.ssh/${KEY_NAME}.pem" -r /etc/letsencrypt/live/srestrepoj-wpd.duckdns.org ubuntu@10.225.4.10:/home/ubuntu
-# sudo scp -i "/home/ubuntu/.ssh/${KEY_NAME}.pem" -r /etc/letsencrypt/live/srestrepoj-wpd.duckdns.org ubuntu@10.225.4.11:/home/ubuntu
+# sudo scp -i "/home/ubuntu/.ssh/${KEY_NAME}.pem" -r /etc/letsencrypt/live/srestrepoj-wpd.duckdns.org ubuntu@10.228.4.10:/home/ubuntu
+# sudo scp -i "/home/ubuntu/.ssh/${KEY_NAME}.pem" -r /etc/letsencrypt/live/srestrepoj-wpd.duckdns.org ubuntu@10.228.4.11:/home/ubuntu
 # EOF
 # )
 
@@ -289,7 +289,7 @@ echo "${INSTANCE_NAME} creada: ${INSTANCE_ID}"
 INSTANCE_NAME="sgbd_principal-zona1"
 SUBNET_ID="${SUBNET_PRIVATE1_ID}"
 SECURITY_GROUP_ID="${SG_MYSQL_ID}"
-PRIVATE_IP="10.225.3.10"
+PRIVATE_IP="10.228.3.10"
 
 # Cargar el script para la base de datos primaria
 USER_DATA_SCRIPT=$(sed 's/role=".*"/role="primary"/' AWS-DATA-USER/configuracion-bd-primaria-y-slave.sh)
@@ -308,7 +308,7 @@ echo "${INSTANCE_NAME} creada: ${INSTANCE_ID}"
 
 # sgbd_secundario
 INSTANCE_NAME="sgbd_replica-zona1"
-PRIVATE_IP="10.225.3.11"
+PRIVATE_IP="10.228.3.11"
 
 # Cargar el script para la base de datos secundaria
 USER_DATA_SCRIPT=$(sed 's/role=".*"/role="secondary"/' AWS-DATA-USER/configuracion-bd-primaria-y-slave.sh)
@@ -333,7 +333,7 @@ echo "${INSTANCE_NAME} creada: ${INSTANCE_ID}"
 INSTANCE_NAME="mensajeria-1"
 SUBNET_ID="${SUBNET_PRIVATE1_ID}"
 SECURITY_GROUP_ID="${SG_MENSAJERIA_ID}"
-PRIVATE_IP="10.225.3.20"
+PRIVATE_IP="10.228.3.20"
 # USER_DATA_SCRIPT=$(cat <<EOF
 # #!/bin/bash
 # # Instalación de Prosody y configuración de base de datos MySQL externa.
@@ -386,7 +386,7 @@ PRIVATE_IP="10.225.3.20"
 # storage = "sql"
 # sql = {
 #     driver = "MySQL";
-#     database = "10.225.3.10";
+#     database = "10.228.3.10";
 #     username = "admin";
 #     password = "Admin123";
 #     host = "prosody";
@@ -420,7 +420,7 @@ PRIVATE_IP="10.225.3.20"
 INSTANCE_NAME="mensajeria-2"
 SUBNET_ID="${SUBNET_PRIVATE1_ID}"
 SECURITY_GROUP_ID="${SG_MENSAJERIA_ID}"
-PRIVATE_IP="10.225.3.30"
+PRIVATE_IP="10.228.3.30"
 # USER_DATA_SCRIPT=$(cat <<EOF
 # #!/bin/bash
 # # Instalación de Prosody y configuración de base de datos MySQL externa.
@@ -473,7 +473,7 @@ PRIVATE_IP="10.225.3.30"
 # storage = "sql"
 # sql = {
 #     driver = "MySQL";
-#     database = "10.225.3.10";
+#     database = "10.228.3.10";
 #     username = "admin";
 #     password = "Admin123";
 #     host = "prosody";
@@ -510,7 +510,7 @@ PRIVATE_IP="10.225.3.30"
 INSTANCE_NAME="soporte-1"
 SUBNET_ID="${SUBNET_PRIVATE2_ID}"
 SECURITY_GROUP_ID="${SG_CMS_ID}"
-PRIVATE_IP="10.225.4.10"
+PRIVATE_IP="10.228.4.10"
 # USER_DATA_SCRIPT=$(cat <<EOF
 # #!/bin/bash
 
@@ -605,7 +605,7 @@ echo "${INSTANCE_NAME} creada: ${INSTANCE_ID}"
 INSTANCE_NAME="soporte-2"
 SUBNET_ID="${SUBNET_PRIVATE2_ID}"
 SECURITY_GROUP_ID="${SG_CMS_ID}"
-PRIVATE_IP="10.225.4.11"
+PRIVATE_IP="10.228.4.11"
 
 # USER_DATA_SCRIPT=$(cat <<EOF
 # #!/bin/bash

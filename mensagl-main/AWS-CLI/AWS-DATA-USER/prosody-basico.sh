@@ -2,7 +2,7 @@
 # Instalación de Prosody y configuración de base de datos MySQL externa.
 
 # Variables
-db_host="10.225.3.10"
+db_host="10.228.3.10"
 db_user="admin"
 db_password="Admin123"
 db_name="prosody"
@@ -22,8 +22,8 @@ check_instance_status() {
 }
 
 # Verificar el estado de las instancias de la base de datos
-check_instance_status "10.225.3.10"
-check_instance_status "10.225.3.11"
+check_instance_status "10.228.3.10"
+check_instance_status "10.228.3.11"
 
 # Instalación de Prosody
 echo "Instalando Prosody y modulos adicionales..." | tee -a $LOG_FILE

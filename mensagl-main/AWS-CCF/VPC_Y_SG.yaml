@@ -1,4 +1,3 @@
-AWSTemplateFormatVersion: "2010-09-09"
 Description: Crear infraestructura de laboratorio en AWS
 
 Parameters:
@@ -39,7 +38,7 @@ Resources:
   VPC:
     Type: AWS::EC2::VPC
     Properties:
-      CidrBlock: "10.225.0.0/16"
+      CidrBlock: "10.228.0.0/16"
       Tags:
         - Key: Name
           Value: !Sub "${NombreAlumno}-VPC"
@@ -49,7 +48,7 @@ Resources:
     Type: AWS::EC2::Subnet
     Properties:
       VpcId: !Ref VPC
-      CidrBlock: "10.225.1.0/24"
+      CidrBlock: "10.228.1.0/24"
       AvailabilityZone: "us-east-1a"
       MapPublicIpOnLaunch: true
       Tags:
@@ -60,7 +59,7 @@ Resources:
     Type: AWS::EC2::Subnet
     Properties:
       VpcId: !Ref VPC
-      CidrBlock: "10.225.2.0/24"
+      CidrBlock: "10.228.2.0/24"
       AvailabilityZone: "us-east-1b"
       MapPublicIpOnLaunch: true
       Tags:
@@ -72,7 +71,7 @@ Resources:
     Type: AWS::EC2::Subnet
     Properties:
       VpcId: !Ref VPC
-      CidrBlock: "10.225.3.0/24"
+      CidrBlock: "10.228.3.0/24"
       AvailabilityZone: "us-east-1a"
       Tags:
         - Key: Name
@@ -82,7 +81,7 @@ Resources:
     Type: AWS::EC2::Subnet
     Properties:
       VpcId: !Ref VPC
-      CidrBlock: "10.225.4.0/24"
+      CidrBlock: "10.228.4.0/24"
       AvailabilityZone: "us-east-1b"
       Tags:
         - Key: Name
@@ -187,7 +186,7 @@ Resources:
         - IpProtocol: "tcp"
           FromPort: 3306
           ToPort: 3306
-          CidrIp: "10.225.0.0/16" # Solo desde la VPC
+          CidrIp: "10.228.0.0/16" # Solo desde la VPC
 
   SGProxy:
     Type: AWS::EC2::SecurityGroup

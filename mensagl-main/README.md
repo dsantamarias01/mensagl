@@ -1,5 +1,5 @@
 # AWS-ASO
-RETO EQUIPO 5 (Sebastian Restrepo Jaramillo) - MENSAGL. Scripts de montaje (VPCs, EC2, automatizacion de aplicaciones, etc.)
+RETO EQUIPO 5 (David Santamaria) - MENSAGL. Scripts de montaje (VPCs, EC2, automatizacion de aplicaciones, etc.)
 USO DE:
 - AWS-CLI
 - AWS CLOUDFORMATION

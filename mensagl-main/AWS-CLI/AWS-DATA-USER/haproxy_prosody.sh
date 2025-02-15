@@ -106,20 +106,20 @@ backend xmpp_back
     mode tcp
     balance roundrobin
     option tcp-check
-    # Servidores Prosody en 10.225.3.20
-    server prosody1 10.225.3.20:5222 check
-    server prosody2 10.225.3.20:5269 check
-    # Servidores Prosody en 10.225.3.30
-    server prosody3 10.225.3.30:5222 check
-    server prosody4 10.225.3.30:5269 check
+    # Servidores Prosody en 10.228.3.20
+    server prosody1 10.228.3.20:5222 check
+    server prosody2 10.228.3.20:5269 check
+    # Servidores Prosody en 10.228.3.30
+    server prosody3 10.228.3.30:5222 check
+    server prosody4 10.228.3.30:5269 check
 
 # Backend para Base de Datos (Primario y Secundario en Failover)
 backend db_back
     mode tcp
     balance roundrobin
     option tcp-check
-    server db_primary 10.225.3.10:3306 check
-    server db_secondary 10.225.3.11:3306 check backup
+    server db_primary 10.228.3.10:3306 check
+    server db_secondary 10.228.3.11:3306 check backup
 EOL
 
 # Reinicia y habilita HAProxy

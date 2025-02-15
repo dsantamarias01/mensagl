@@ -4,7 +4,7 @@
 # Configuración
 DATE=$(date +%F)
 BUCKET_NAME="backups-srj"
-DB1_HOST="10.225.3.10"
+DB1_HOST="10.228.3.10"
 RDS_ENDPOINT="wordpress-db.c1vddmtpdv5b.us-east-1.rds.amazonaws.com"
 DB1_USER="backup_user"
 RDS_USER="admin"
