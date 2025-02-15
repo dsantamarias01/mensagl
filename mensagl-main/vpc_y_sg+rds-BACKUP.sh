@@ -435,7 +435,7 @@ echo "Configurando Prosody..." | tee -a $LOG_FILE
 sudo tee /etc/prosody/prosody.cfg.lua > /dev/null <<EOL
 -- Prosody Configuration
 
-VirtualHost "srestrepoj-prosody.duckdns.org"
+VirtualHost "davidprosody3.duckdns.org"
 admins = { "admin@davidprosody3.duckdns.org" }
 
 modules_enabled = {
@@ -643,7 +643,7 @@ mysql -h ${RDS_ENDPOINT} -u ${DB_USERNAME} -p${DB_PASSWORD} -e "FLUSH PRIVILEGES
 # Descargar y configurar WordPress
 sudo -u www-data wp-cli core download --path=/var/www/html
 sudo -u www-data wp-cli core config --dbname=wordpressdb --dbuser=${DB_USERNAME} --dbpass=${DB_PASSWORD} --dbhost=${RDS_ENDPOINT} --dbprefix=wp --path=/var/www/html
-sudo -u www-data wp-cli core install --url='https://srestrepoj-wordp.duckdns.org' --title='Wordpress Sebastian' --admin_user='admin' --admin_password='Admin123' --admin_email='admin@example.com' --path=/var/www/html
+sudo -u www-data wp-cli core install --url='https://wordpressdavid2.duckdns.org' --title='Wordpress Sebastian' --admin_user='admin' --admin_password='Admin123' --admin_email='admin@example.com' --path=/var/www/html
 
 # Instalar y activar plugins
 sudo -u www-data wp-cli plugin install supportcandy --activate --path='/var/www/html'
